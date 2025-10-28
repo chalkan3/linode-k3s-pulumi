@@ -6,6 +6,10 @@
 [![Linode](https://img.shields.io/badge/Linode-Cloud-green)](https://www.linode.com/)
 [![ArgoCD](https://img.shields.io/badge/ArgoCD-GitOps-orange)](https://argoproj.github.io/cd/)
 
+[![CI Tests](https://github.com/chalkan3/linode-k3s-pulumi/workflows/CI%20-%20Tests/badge.svg)](https://github.com/chalkan3/linode-k3s-pulumi/actions/workflows/ci-tests.yml)
+[![Code Quality](https://github.com/chalkan3/linode-k3s-pulumi/workflows/Code%20Quality/badge.svg)](https://github.com/chalkan3/linode-k3s-pulumi/actions/workflows/code-quality.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 A complete, production-ready Infrastructure as Code (IaC) solution for deploying **lightweight Kubernetes (K3s)** clusters on **Linode** using **Pulumi** with **TypeScript**.
 
 ## ✨ Features
