@@ -1,0 +1,116 @@
+name: Code Quality
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+jobs:
+  code-analysis:
+    name: Code Quality Analysis
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for better analysis
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Run TypeScript compilation
+        run: npm run build
+      
+      - name: Count lines of code
+        id: loc
+        run: |
+          echo "## Lines of Code" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**TypeScript Files:**" >> $GITHUB_STEP_SUMMARY
+          find . -name '*.ts' -not -path '*/node_modules/*' -not -path '*/dist/*' | xargs wc -l | tail -1 >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Test Files:**" >> $GITHUB_STEP_SUMMARY
+          find . -name '*.test.ts' -not -path '*/node_modules/*' | xargs wc -l | tail -1 >> $GITHUB_STEP_SUMMARY
+      
+      - name: Test coverage threshold
+        run: |
+          npm run test:coverage
+          
+          # Check coverage thresholds
+          COVERAGE=$(cat coverage/coverage-summary.json | jq '.total.lines.pct')
+          echo "Test coverage: ${COVERAGE}%"
+          
+          if (( $(echo "$COVERAGE < 70" | bc -l) )); then
+            echo "❌ Test coverage is below 70%!" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          else
+            echo "✅ Test coverage: ${COVERAGE}% (threshold: 70%)" >> $GITHUB_STEP_SUMMARY
+          fi
+      
+      - name: Check for TODO comments
+        run: |
+          echo "## TODO Comments" >> $GITHUB_STEP_SUMMARY
+          TODO_COUNT=$(grep -r "TODO" --include="*.ts" --exclude-dir=node_modules --exclude-dir=dist . | wc -l || echo "0")
+          echo "Found ${TODO_COUNT} TODO comments" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "$TODO_COUNT" -gt 50 ]; then
+            echo "⚠️ Warning: High number of TODO comments (${TODO_COUNT})" >> $GITHUB_STEP_SUMMARY
+          fi
+      
+      - name: Check bundle size
+        run: |
+          echo "## Build Size" >> $GITHUB_STEP_SUMMARY
+          du -sh dist/ >> $GITHUB_STEP_SUMMARY || echo "No dist folder"
+      
+      - name: Validate package.json
+        run: npm run validate || echo "No validate script"
+
+  test-matrix:
+    name: Test Results Matrix
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Build
+        run: npm run build
+      
+      - name: Run all tests with JSON output
+        run: npm test -- --json --outputFile=test-results.json || true
+      
+      - name: Generate test matrix
+        run: |
+          echo "## Test Suite Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Count test suites
+          TOTAL_SUITES=$(find . -name '*.test.ts' -not -path '*/node_modules/*' | wc -l)
+          echo "**Total Test Suites:** ${TOTAL_SUITES}" >> $GITHUB_STEP_SUMMARY
+          
+          # Run tests and capture results
+          npm test -- --verbose 2>&1 | tee test-output.txt || true
+          
+          PASSED=$(grep -c "PASS" test-output.txt || echo "0")
+          FAILED=$(grep -c "FAIL" test-output.txt || echo "0")
+          
+          echo "**Passed:** ${PASSED} ✅" >> $GITHUB_STEP_SUMMARY
+          echo "**Failed:** ${FAILED} ❌" >> $GITHUB_STEP_SUMMARY
