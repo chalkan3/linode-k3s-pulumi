@@ -1,0 +1,3 @@
+name: linode-k3s-cluster
+runtime: nodejs
+description: K3s cluster on Linode using Pulumi with component architecture

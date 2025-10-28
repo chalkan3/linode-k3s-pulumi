@@ -1,0 +1,137 @@
+config:
+  # ============================================
+  # CLUSTER - Configuração Básica
+  # ============================================
+  linode-k3s-cluster:cluster:
+    name: my-k3s-cluster
+    region: us-mia
+    image: linode/ubuntu22.04
+    tags:
+      - production
+      - k3s
+      - zapper
+  # ============================================
+  # CONTROL PLANE - 3 Masters para HA
+  # ============================================
+  linode-k3s-cluster:controlPlane:
+    count: 3
+    instanceType: g6-standard-4
+    labels:
+      environment: production
+      role: master
+    nodes:
+      - name: master-1
+        instanceType: g6-standard-4
+        labels:
+          node-id: master-1
+          zone: a
+      - name: master-2
+        instanceType: g6-standard-4
+        labels:
+          node-id: master-2
+          zone: b
+      - name: master-3
+        instanceType: g6-standard-4
+        labels:
+          node-id: master-3
+          zone: c
+  # ============================================
+  # WORKERS - 5 Workers Especializados
+  # ============================================
+  linode-k3s-cluster:workers:
+    count: 5
+    instanceType: g6-standard-2
+    labels:
+      environment: production
+    nodes:
+      # PostgreSQL Workers
+      - name: worker-postgres-1
+        instanceType: g6-standard-4
+        labels:
+          workload: postgres
+          database: postgresql
+          node-id: postgres-1
+          zone: a
+      - name: worker-postgres-2
+        instanceType: g6-standard-4
+        labels:
+          workload: postgres
+          database: postgresql
+          node-id: postgres-2
+          zone: b
+      # ClickHouse Worker
+      - name: worker-clickhouse-1
+        instanceType: g6-standard-4
+        labels:
+          workload: clickhouse
+          database: clickhouse
+          node-id: clickhouse-1
+          zone: a
+      # PeerDB Workers
+      - name: worker-peerdb-1
+        instanceType: g6-standard-2
+        labels:
+          workload: peerdb
+          app: peerdb
+          node-id: peerdb-1
+          zone: a
+      - name: worker-peerdb-2
+        instanceType: g6-standard-2
+        labels:
+          workload: peerdb
+          app: peerdb
+          node-id: peerdb-2
+          zone: b
+  # ============================================
+  # K3S - Kubernetes Configuration
+  # ============================================
+  linode-k3s-cluster:k3s:
+    version: v1.28.5+k3s1
+    channel: stable
+    disableComponents:
+      - traefik
+  # ============================================
+  # SSH - Configuração de Chaves
+  # ============================================
+  linode-k3s-cluster:ssh:
+    autoGenerate: true
+    keyType: ed25519
+    keyBits: 4096
+  # ============================================
+  # VPC - Virtual Private Cloud
+  # ============================================
+  linode-k3s-cluster:vpc:
+    enabled: false
+  # ============================================
+  # NETWORK - Rede e Firewall
+  # ============================================
+  linode-k3s-cluster:network:
+    allowSshFromAnywhere: true
+  # ============================================
+  # BASTION - Jump Server
+  # ============================================
+  linode-k3s-cluster:bastion:
+    enabled: true
+    instanceType: g6-standard-1
+  # ============================================
+  # ARGOCD - GitOps Continuous Delivery
+  # ============================================
+  # Configuração do ArgoCD para deploy automático de aplicações
+  # O repositório zapper-argocd contém arquivos YAML de Applications
+  # no diretório apps/ que serão aplicados automaticamente
+  linode-k3s-cluster:argocd:
+    enabled: true
+    version: stable
+    gitRepo: https://github.com/chalkan3/zapper-argocd
+    gitPath: apps
+    gitBranch: main
+  # ============================================
+  # SECRETS - Senhas e Tokens Criptografados
+  # ============================================
+  linode-k3s-cluster:secrets:
+    rootPassword: dummy
+  linode-k3s-cluster:secrets.rootPassword:
+    secure: v1:yQmwPFzcQRFd6ylM:TvmKnTX65XbEIFoXu8BSeDiYlybuOek7WhG26yi205eaolLwDlsE8slv3jeVaMGRz2ac/N0VrDdxV3RL
+  linode:token:
+    secure: v1:Ub9gp+EnPjMtj5BJ:HFk16DmAow26SLhiCc5cZZkcDUZ0XP3w7OQdRH2jcjvWy6MYryjatw2/ZNcr6sCDhj2li9yzF9RstYOl+F8BRlN8yMFF4B2D+ttagueCPdo=
+encryptionsalt: v1:qVkpkw6xpDk=:v1:0SjzFdc1ShpCAcbI:sMrDe6sq1QVh/R+gHcy1rf5wqYRy/w==

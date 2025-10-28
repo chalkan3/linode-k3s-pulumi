@@ -1,0 +1,39 @@
+{
+  "name": "linode-k3s-cluster",
+  "version": "1.0.0",
+  "description": "Pulumi project to deploy a K3s cluster on Linode",
+  "main": "index.ts",
+  "scripts": {
+    "build": "tsc",
+    "preview": "pulumi preview",
+    "up": "pulumi up",
+    "destroy": "pulumi destroy",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:verbose": "jest --verbose",
+    "test:unit": "jest --testPathIgnorePatterns=integration --testPathIgnorePatterns=e2e",
+    "test:integration": "jest __tests__/integration/",
+    "test:e2e": "jest __tests__/e2e/ --runInBand --detectOpenHandles",
+    "test:e2e:cleanup": "node -e \"require('./__tests__/e2e/helpers/pulumi-helper').cleanupOrphanedE2EStacks()\""
+  },
+  "keywords": [
+    "pulumi",
+    "linode",
+    "k3s",
+    "kubernetes"
+  ],
+  "dependencies": {
+    "@pulumi/command": "^1.0.0",
+    "@pulumi/linode": "^4.16.0",
+    "@pulumi/random": "^4.16.0"
+  },
+  "devDependencies": {
+    "@pulumi/pulumi": "^3.204.0",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^20.19.23",
+    "jest": "^30.2.0",
+    "ts-jest": "^29.4.5",
+    "typescript": "^5.9.3"
+  }
+}
